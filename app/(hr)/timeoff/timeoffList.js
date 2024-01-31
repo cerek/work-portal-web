@@ -11,6 +11,9 @@ import { Toolbar } from 'primereact/toolbar'
 import { Dialog } from 'primereact/dialog'
 import { InputText } from 'primereact/inputtext'
 import { InputTextarea } from 'primereact/inputtextarea'
+import { Dropdown } from 'primereact/dropdown'
+import { Tag } from 'primereact/tag'
+import { Calendar } from 'primereact/calendar'
 import { Paginator } from 'primereact/paginator'
 import { classNames } from 'primereact/utils'
 import {
@@ -22,14 +25,22 @@ import {
   getFormErrorMessage,
 } from '@/lib/utils/page'
 
-export default function LocationList({ locationList }) {
+export default function TimeoffList({
+  timeoffList,
+  timeoffTypeList,
+  applicantList,
+  approverList,
+}) {
   const initDefaultValues = {
-    location_name: '',
-    location_address: '',
-    location_zipcode: '',
-    location_desc: '',
+    timeoff_status: 1,
+    timeoff_start_datetime: '',
+    timeoff_end_datetime: '',
+    timeoff_reason: '',
+    timeoff_apply_employee: null,
+    timeoff_approval_employee: null,
+    timeoff_type: null,
   }
-  const apiModule = 'location'
+  const apiModule = 'timeoff'
   const dt = useRef(null)
   const toast = useRef(null)
   const router = useRouter()
@@ -38,7 +49,7 @@ export default function LocationList({ locationList }) {
   const [dataInstance, setDataInstance] = useState({})
   const [deleteDialog, setDeleteDialog] = useState(false)
   const [mutipleDeleteDialog, setMutipleDeleteDialog] = useState(false)
-  const [listData, setListData] = useState(locationList)
+  const [listData, setListData] = useState(timeoffList)
   const [selectInstances, setSelectInstances] = useState(null)
   const [firstPage, setFirstPage] = useState(0)
   const [pageRows, setPageRows] = useState(10)
@@ -94,7 +105,7 @@ export default function LocationList({ locationList }) {
 
   const header = (
     <div className="flex flex-wrap gap-2 align-items-center justify-content-between">
-      <h4 className="m-0">Location</h4>
+      <h4 className="m-0">TimeOff</h4>
       <span className="p-input-icon-left">
         <div className="p-inputgroup flex-1">
           <InputText
@@ -124,6 +135,58 @@ export default function LocationList({ locationList }) {
         />
       </React.Fragment>
     )
+  }
+
+  const typeBodyTemplate = (rowData) => {
+    return <span>{rowData.timeoff_type_hm}</span>
+  }
+
+  const statusBodyTemplate = (rowData) => {
+    return (
+      <Tag severity={getSeverity(rowData.timeoff_status_hm)}>
+        {rowData.timeoff_status_hm}
+      </Tag>
+    )
+  }
+
+  const approverBodyTemplate = (rowData) => {
+    return <span>{rowData.timeoff_approval_employee_hm}</span>
+  }
+
+  const startToEndBodyTemplate = (rowData) => {
+    return (
+      <>
+        <span>
+          From:{' '}
+          <span className="font-bold">
+            {new Date(rowData.timeoff_start_datetime).toLocaleString()}
+          </span>
+        </span>
+        <br />
+        <span>
+          To:{' '}
+          <span className="font-bold">
+            {new Date(rowData.timeoff_end_datetime).toLocaleString()}
+          </span>
+        </span>
+        <br />
+      </>
+    )
+  }
+
+  const getSeverity = (insStatus) => {
+    switch (insStatus) {
+      case 'Apply':
+        return 'info'
+      case 'HR Approval':
+        return 'success'
+      case 'Manager Approval':
+        return 'primary'
+      case 'Cancel':
+        return 'danger'
+      default:
+        return null
+    }
   }
 
   // RowEditor Relative
@@ -165,7 +228,8 @@ export default function LocationList({ locationList }) {
           severity: 'success',
           summary: 'Successful',
           detail:
-            JSON.stringify(resData.location_name) + 'update Successfully!!',
+            JSON.stringify(resData.timeoff_apply_employee_hm) +
+            "'s timeoff update Successfully!!",
           life: 3000,
         })
         const listRefreshData = await fetch('/api/' + apiModule)
@@ -182,6 +246,47 @@ export default function LocationList({ locationList }) {
         type="text"
         value={options.value}
         onChange={(e) => options.editorCallback(e.target.value)}
+      />
+    )
+  }
+
+  const typeEditor = (options) => {
+    return (
+      <Dropdown
+        id="timeoff_type"
+        value={options.value}
+        onChange={(e) => options.editorCallback(e.value)}
+        placeholder="Select a type"
+        options={timeoffTypeList}
+      />
+    )
+  }
+
+  const statusEditor = (options) => {
+    return (
+      <Dropdown
+        id="timeoff_status"
+        value={options.value}
+        onChange={(e) => options.editorCallback(e.value)}
+        placeholder="Select a Status"
+        options={[
+          { value: 1, label: 'Apply' },
+          { value: 2, label: 'Manager Approval' },
+          { value: 3, label: 'HR Approval' },
+          { value: 4, label: 'Cancel' },
+        ]}
+      />
+    )
+  }
+
+  const approverEditor = (options) => {
+    return (
+      <Dropdown
+        id="timeoff_approval_employee"
+        value={options.value}
+        onChange={(e) => options.editorCallback(e.value)}
+        placeholder="Select a approver"
+        options={approverList}
       />
     )
   }
@@ -204,7 +309,8 @@ export default function LocationList({ locationList }) {
       toast.current.show({
         severity: 'success',
         summary: 'Successful',
-        detail: deletedInsData.location_name + ' deleted!',
+        detail:
+          deletedInsData.timeoff_apply_employee_hm + "'s timeoff deleted!",
         life: 3000,
       })
     }
@@ -231,7 +337,8 @@ export default function LocationList({ locationList }) {
         detail:
           JSON.stringify(
             successArr.map(
-              (item) => item.location_name + ' - ' + '(' + item.id + ')'
+              (item) =>
+                item.timeoff_apply_employee_hm + ' - ' + '(' + item.id + ')'
             )
           ) + ' deleted!',
         life: 30000,
@@ -244,7 +351,8 @@ export default function LocationList({ locationList }) {
         detail:
           JSON.stringify(
             failArr.map(
-              (item) => item.location_name + ' - ' + '(' + item.id + ')'
+              (item) =>
+                item.timeoff_apply_employee_hm + ' - ' + '(' + item.id + ')'
             )
           ) + ' not deleted!',
         life: 30000,
@@ -283,7 +391,8 @@ export default function LocationList({ locationList }) {
         severity: 'success',
         summary: 'Successful',
         detail:
-          JSON.stringify(resData.location_name) + 'create Successfully!!',
+          JSON.stringify(resData.timeoff_apply_employee_hm) +
+          "'s timeoff create Successfully!!",
         life: 3000,
       })
     }
@@ -365,29 +474,47 @@ export default function LocationList({ locationList }) {
             sortable
             style={{ maxWidth: '3rem' }}></Column>
           <Column
-            header="Name"
+            field="timeoff_apply_employee_hm"
+            header="Applicant"
+            style={{ maxWidth: '6rem' }}></Column>
+          <Column
+            field="timeoff_apply_employee_department_hm"
+            header="Department"
+            style={{ maxWidth: '4rem' }}></Column>
+          <Column
+            header="TimeOff Reason"
             editor={(options) => textEditor(options)}
             sortable
-            field="location_name"
+            field="timeoff_reason"
+            style={{ minWidth: '8rem' }}></Column>
+          <Column
+            header="Type"
+            editor={(options) => typeEditor(options)}
+            field="timeoff_type"
+            sortable
+            body={typeBodyTemplate}
             style={{ minWidth: '4rem' }}></Column>
           <Column
-            header="Address"
-            editor={(options) => textEditor(options)}
+            header="Status"
+            field="timeoff_status"
+            body={statusBodyTemplate}
+            editor={(options) => statusEditor(options)}
             sortable
-            field="location_address"
             style={{ minWidth: '4rem' }}></Column>
           <Column
-            header="ZipCode"
-            editor={(options) => textEditor(options)}
-            sortable
-            field="location_zipcode"
-            style={{ minWidth: '4rem' }}></Column>
+            header="Start-To-End"
+            body={startToEndBodyTemplate}
+            style={{ minWidth: '5rem' }}></Column>
           <Column
-            header="Description"
-            editor={(options) => textEditor(options)}
-            sortable
-            field="location_desc"
-            style={{ minWidth: '4rem' }}></Column>
+            header="Timeoff Hours"
+            field="timeoff_hours"
+            style={{ minWidth: '5rem' }}></Column>
+          <Column
+            header="Approver"
+            field="timeoff_approval_employee"
+            editor={(options) => approverEditor(options)}
+            body={approverBodyTemplate}
+            style={{ maxWidth: '6rem' }}></Column>
           <Column
             header="CreateTime"
             sortable
@@ -420,33 +547,39 @@ export default function LocationList({ locationList }) {
         visible={newInstanceDialog}
         style={{ width: '32rem' }}
         breakpoints={{ '960px': '75vw', '641px': '90vw' }}
-        header="New Location"
+        header="New Timeoff"
         modal
         className="p-fluid"
-        // footer={newInstanceDialogFooter}
         onHide={() => setNewInstanceDialog(false)}>
         <form
           onSubmit={handleSubmit(onSubmit)}
           className="flex flex-column gap-2">
           <div className="field">
             <Controller
-              name="location_name"
+              name="timeoff_apply_employee"
               control={control}
-              rules={{ required: 'Location Name is required.' }}
+              rules={{ required: 'Applicant is required.' }}
               render={({ field, fieldState }) => (
                 <>
                   <label
                     htmlFor={field.name}
                     className={classNames({
-                      'p-error': errors.location_name,
+                      'p-error': errors.timeoff_apply_employee,
                     })}>
-                    <b>Location Name</b>
+                    <b>Applicant</b>
                   </label>
-                  <InputText
+                  <Dropdown
                     id={field.name}
                     value={field.value}
+                    showClear
+                    filter
+                    optionLabel="label"
+                    placeholder="Select a Applicant..."
+                    options={applicantList}
+                    optionValue="value"
+                    focusInputRef={field.ref}
+                    onChange={(e) => field.onChange(e.value)}
                     className={classNames({ 'p-invalid': fieldState.error })}
-                    onChange={(e) => field.onChange(e.target.value)}
                   />
                   {getFormErrorMessage(field.name, errors)}
                 </>
@@ -456,53 +589,182 @@ export default function LocationList({ locationList }) {
 
           <div className="field">
             <Controller
-              name="location_address"
+              name="timeoff_reason"
               control={control}
+              rules={{ required: 'Timeoff reason is required.' }}
               render={({ field, fieldState }) => (
                 <>
-                  <label htmlFor={field.name}>Address</label>
-                  <InputText
-                    id={field.name}
-                    value={field.value}
-                    className={classNames({ 'p-invalid': fieldState.error })}
-                    onChange={(e) => field.onChange(e.target.value)}
-                  />
-                </>
-              )}
-            />
-          </div>
-
-          <div className="field">
-            <Controller
-              name="location_zipcode"
-              control={control}
-              render={({ field, fieldState }) => (
-                <>
-                  <label htmlFor={field.name}>ZipCode</label>
-                  <InputText
-                    id={field.name}
-                    value={field.value}
-                    className={classNames({ 'p-invalid': fieldState.error })}
-                    onChange={(e) => field.onChange(e.target.value)}
-                  />
-                </>
-              )}
-            />
-          </div>
-
-          <div className="field">
-            <Controller
-              name="location_desc"
-              control={control}
-              render={({ field, fieldState }) => (
-                <>
-                  <label htmlFor={field.name}>Description</label>
+                  <label
+                    htmlFor={field.name}
+                    className={classNames({
+                      'p-error': errors.timeoff_reason,
+                    })}>
+                    <b>Reason</b>
+                  </label>
                   <InputTextarea
                     id={field.name}
                     {...field}
                     rows={4}
                     cols={30}
                     className={classNames({ 'p-invalid': fieldState.error })}
+                  />
+                  {getFormErrorMessage(field.name, errors)}
+                </>
+              )}
+            />
+          </div>
+
+          <div className="field">
+            <Controller
+              name="timeoff_type"
+              control={control}
+              rules={{ required: 'Timeoff type is required.' }}
+              render={({ field, fieldState }) => (
+                <>
+                  <label
+                    htmlFor={field.name}
+                    className={classNames({
+                      'p-error': errors.timeoff_type,
+                    })}>
+                    <b>Timeoff Type</b>
+                  </label>
+                  <Dropdown
+                    id={field.name}
+                    value={field.value}
+                    showClear
+                    filter
+                    optionLabel="label"
+                    placeholder="Select a timeoff type..."
+                    options={timeoffTypeList}
+                    optionValue="value"
+                    focusInputRef={field.ref}
+                    onChange={(e) => field.onChange(e.value)}
+                    className={classNames({ 'p-invalid': fieldState.error })}
+                  />
+                  {getFormErrorMessage(field.name, errors)}
+                </>
+              )}
+            />
+          </div>
+
+          <div className="field">
+            <Controller
+              name="timeoff_status"
+              control={control}
+              rules={{ required: 'Timeoff status is required.' }}
+              render={({ field, fieldState }) => (
+                <>
+                  <label
+                    htmlFor={field.name}
+                    className={classNames({
+                      'p-error': errors.timeoff_status,
+                    })}>
+                    <b>Timeoff Status</b>
+                  </label>
+                  <Dropdown
+                    id={field.name}
+                    value={field.value}
+                    showClear
+                    filter
+                    optionLabel="label"
+                    placeholder="Select a timeoff status..."
+                    options={[
+                      { value: 1, label: 'Apply' },
+                      { value: 2, label: 'Manager Approval' },
+                      { value: 3, label: 'HR Approval' },
+                      { value: 4, label: 'Cancel' },
+                    ]}
+                    optionValue="value"
+                    focusInputRef={field.ref}
+                    onChange={(e) => field.onChange(e.value)}
+                    className={classNames({ 'p-invalid': fieldState.error })}
+                  />
+                  {getFormErrorMessage(field.name, errors)}
+                </>
+              )}
+            />
+          </div>
+
+          <div className="field">
+            <Controller
+              name="timeoff_start_datetime"
+              control={control}
+              rules={{ required: 'Timeoff start is required.' }}
+              render={({ field, fieldState }) => (
+                <>
+                  <label
+                    htmlFor={field.name}
+                    className={classNames({
+                      'p-error': errors.timeoff_start_datetime,
+                    })}>
+                    <b>Timeoff Start</b>
+                  </label>
+                  <Calendar
+                    inputId={field.name}
+                    value={field.value}
+                    onChange={field.onChange}
+                    dateFormat="dd/mm/yy"
+                    showTime
+                    showButtonBar
+                    hourFormat="24"
+                    className={classNames({ 'p-invalid': fieldState.error })}
+                  />
+                  {getFormErrorMessage(field.name, errors)}
+                </>
+              )}
+            />
+          </div>
+
+          <div className="field">
+            <Controller
+              name="timeoff_end_datetime"
+              control={control}
+              rules={{ required: 'Timeoff end is required.' }}
+              render={({ field, fieldState }) => (
+                <>
+                  <label
+                    htmlFor={field.name}
+                    className={classNames({
+                      'p-error': errors.timeoff_end_datetime,
+                    })}>
+                    <b>Timeoff End</b>
+                  </label>
+                  <Calendar
+                    inputId={field.name}
+                    value={field.value}
+                    onChange={field.onChange}
+                    dateFormat="dd/mm/yy"
+                    showTime
+                    showButtonBar
+                    hourFormat="24"
+                    className={classNames({ 'p-invalid': fieldState.error })}
+                  />
+                  {getFormErrorMessage(field.name, errors)}
+                </>
+              )}
+            />
+          </div>
+
+          <div className="field">
+            <Controller
+              name="timeoff_approval_employee"
+              control={control}
+              render={({ field, fieldState }) => (
+                <>
+                  <label htmlFor={field.name}>
+                    <b>Approver</b>
+                  </label>
+                  <Dropdown
+                    id={field.name}
+                    value={field.value}
+                    showClear
+                    filter
+                    optionLabel="label"
+                    placeholder="Select a Approver..."
+                    options={approverList}
+                    optionValue="value"
+                    focusInputRef={field.ref}
+                    onChange={(e) => field.onChange(e.value)}
                   />
                 </>
               )}
@@ -541,16 +803,21 @@ export default function LocationList({ locationList }) {
           {dataInstance && (
             <span>
               Are you sure you want to delete{' '}
-              <b>{dataInstance.location_name}</b>?<br />
-              <h4>Location Details</h4>
+              <b>{dataInstance.timeoff_reason}</b>?<br />
+              <h4>Timeoff Details</h4>
               <br />
-              Location ID: <span className="font-blod">{dataInstance.id}</span>
+              Timeoff ID: <span className="font-bold">{dataInstance.id}</span>
               <br />
-              Location Address:{' '}
-              <span className="font-blod">{dataInstance.location_address}</span>
+              Timeoff Applicant:{' '}
+              <span className="font-bold">
+                {dataInstance.timeoff_apply_employee_hm}
+              </span>
               <br />
-              Location Description:{' '}
-              <span className="font-blod">{dataInstance.location_desc}</span>
+              Timeoff Reason:{' '}
+              <span className="font-bold">{dataInstance.timeoff_reason}</span>
+              <br />
+              Timeoff Hours:{' '}
+              <span className="font-bold">{dataInstance.timeoff_hours}</span>
             </span>
           )}
         </div>
@@ -577,7 +844,7 @@ export default function LocationList({ locationList }) {
               {selectInstances.map((item) => (
                 <>
                   <strong style={{ 'fontSize?': '150%' }} key={item.id}>
-                    {item.location_name} ({item.id})
+                    {item.timeoff_apply_employee_hm} ({item.id})
                   </strong>
                   <br />
                 </>
