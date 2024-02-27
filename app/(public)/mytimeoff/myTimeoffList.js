@@ -271,7 +271,6 @@ export default function MyTimeoffList({ timeoffList, timeoffTypeList }) {
   // Main operation function
   async function onSubmit(data) {
     const dirtyData = dirtyValues(dirtyFields, data)
-    console.log(dirtyData)
     const res = await fetch('/api/' + apiModule, {
       method: 'POST',
       body: JSON.stringify(dirtyData),

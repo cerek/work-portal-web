@@ -2,7 +2,7 @@ import MyTimeoffList from './myTimeoffList'
 import serverSideFetch from '@/lib/serverFetchData/page'
 import NewBreadCrumb from '@/components/breadCrumb/page'
 
-export default async function LocationPage() {
+export default async function MyTimeoffPage() {
   const timeoffList = await serverSideFetch('/mytimeoff/')
 
   const timeoffTypeListRes = await serverSideFetch('/timeofftype/?page_size=500')

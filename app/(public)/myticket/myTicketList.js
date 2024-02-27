@@ -11,7 +11,7 @@ import { Button } from 'primereact/button'
 import { Toolbar } from 'primereact/toolbar'
 import { Dialog } from 'primereact/dialog'
 import { InputText } from 'primereact/inputtext'
-import { InputTextarea } from 'primereact/inputtextarea'
+import { Editor } from 'primereact/editor'
 import { Dropdown } from 'primereact/dropdown'
 import { Tag } from 'primereact/tag'
 import { Paginator } from 'primereact/paginator'
@@ -19,41 +19,32 @@ import { classNames } from 'primereact/utils'
 import {
   searchList,
   pageControl,
-  delInsConfirm,
   dirtyValues,
   getFormErrorMessage,
 } from '@/lib/utils/page'
 
-export default function TicketList({
+export default function MyTicketList({
   ticketList,
   ticketTypeList,
-  ticketCreatorList,
-  ticketAssignerList,
   ticketAssignDepartment,
 }) {
   const initDefaultValues = {
     ticket_title: '',
     ticket_description: '',
-    ticket_solution: '',
-    ticket_status: 0,
-    ticket_creator: '',
-    ticket_assigner: '',
-    ticket_assign_department: '',
+    ticket_assign_department: null,
     ticket_type: null,
   }
-  const apiModule = 'ticket'
+  const apiModule = 'myticket'
   const dt = useRef(null)
   const toast = useRef(null)
   const router = useRouter()
   const [newInstanceDialog, setNewInstanceDialog] = useState(false)
   const [globalFilter, setGlobalFilter] = useState('')
-  const [dataInstance, setDataInstance] = useState({})
-  const [deleteDialog, setDeleteDialog] = useState(false)
-  const [mutipleDeleteDialog, setMutipleDeleteDialog] = useState(false)
   const [listData, setListData] = useState(ticketList)
-  const [selectInstances, setSelectInstances] = useState(null)
+  const [delInstances, setDelInstances] = useState(null)
   const [firstPage, setFirstPage] = useState(0)
   const [pageRows, setPageRows] = useState(10)
+  const [displayConfirmation, setDisplayConfirmation] = useState(false)
   const {
     handleSubmit,
     formState: { dirtyFields, errors },
@@ -64,35 +55,19 @@ export default function TicketList({
   })
 
   // Table Header and Toolbar
-  const exportCSV = () => {
-    dt.current.exportCSV()
-  }
-
   const startToolbarTemplate = () => {
     return (
       <div className="flex flex-wrap gap-2">
-        <Link href={'/ticket/create'}>
-          <Button label="New" icon="pi pi-plus" severity="success" />
-        </Link>
         <Button
-          label="Delete"
-          icon="pi pi-trash"
-          severity="danger"
-          onClick={() => setMutipleDeleteDialog(true)}
-          disabled={!selectInstances || !selectInstances.length}
+          label="New(Brief)"
+          icon="pi pi-plus"
+          severity="success"
+          onClick={() => setNewInstanceDialog(true)}
         />
+        <Link href={'/myticket/create'}>
+          <Button label="New(Detail)" icon="pi pi-plus" severity="success" />
+        </Link>
       </div>
-    )
-  }
-
-  const rightToolbarTemplate = () => {
-    return (
-      <Button
-        label="Export"
-        icon="pi pi-upload"
-        className="p-button-help"
-        onClick={exportCSV}
-      />
     )
   }
 
@@ -103,7 +78,7 @@ export default function TicketList({
 
   const header = (
     <div className="flex flex-wrap gap-2 align-items-center justify-content-between">
-      <h4 className="m-0">Ticket</h4>
+      <h4 className="m-0">My Ticket</h4>
       <span className="p-input-icon-left">
         <div className="p-inputgroup flex-1">
           <InputText
@@ -120,35 +95,85 @@ export default function TicketList({
     </div>
   )
 
+  const handleShowCloseConfirmation = (r) => {
+    setDelInstances(r)
+    setDisplayConfirmation(true)
+  }
+
+  const handleCloseTicket = async () => {
+    const closeBody = { ticket_status: 5 }
+    const res = await fetch('/api/' + apiModule + '/' + delInstances.id, {
+      method: 'PATCH',
+      body: JSON.stringify(closeBody),
+    })
+    if (!res.ok) {
+      const resData = await res.json()
+      toast.current.show({
+        severity: 'error',
+        summary: 'Failed',
+        detail: JSON.stringify(resData),
+        life: 30000,
+      })
+    } else {
+      const listRefreshData = await fetch('/api/' + apiModule)
+      const newListData = await listRefreshData.json()
+      setListData(newListData)
+      router.refresh()
+      toast.current.show({
+        severity: 'success',
+        summary: 'Successful',
+        detail: delInstances.ticket_title + ' was close successfully!!',
+        life: 10000,
+      })
+    }
+    setDelInstances(null)
+    setDisplayConfirmation(false)
+  }
+
   // Table Template
+  const confirmationDialogFooter = (
+    <>
+      <Button
+        type="button"
+        label="No"
+        icon="pi pi-times"
+        onClick={() => setDisplayConfirmation(false)}
+      />
+      <Button
+        type="button"
+        label="Yes"
+        icon="pi pi-check"
+        severity="danger"
+        onClick={handleCloseTicket}
+        autoFocus
+      />
+    </>
+  )
+
   const actionBodyTemplate = (rowData) => {
     return (
       <React.Fragment>
-        <Link href={'/ticket/detail/' + rowData.id}>
-          <Button
-            icon="pi pi-eye"
-            rounded
-            outlined
-            className="mr-2"
-            severity="info"
-          />
+        <Link href={'/myticket/detail/' + rowData.id}>
+          <Button icon="pi pi-eye" rounded className="mr-2" severity="info" />
         </Link>
-        <Link href={'/ticket/update/' + rowData.id}>
+        {!['Closed', 'Finished'].includes(rowData.ticket_status_hm) && (
+          <Link href={'/myticket/update/' + rowData.id}>
+            <Button
+              icon="pi pi-pencil"
+              rounded
+              className="mr-2"
+              severity="warning"
+            />
+          </Link>
+        )}
+        {!['Closed', 'Rejected'].includes(rowData.ticket_status_hm) && (
           <Button
-            icon="pi pi-pencil"
+            icon="pi pi-times"
             rounded
-            outlined
-            className="mr-2"
-            severity="warning"
+            severity="danger"
+            onClick={() => handleShowCloseConfirmation(rowData)}
           />
-        </Link>
-        <Button
-          icon="pi pi-trash"
-          rounded
-          outlined
-          severity="danger"
-          onClick={() => confirmDelete(rowData)}
-        />
+        )}
       </React.Fragment>
     )
   }
@@ -194,15 +219,15 @@ export default function TicketList({
   const shortBodyTemplate = (rowData, flag) => {
     let res = ''
     if (flag == 'desc') {
-        res = rowData.ticket_description
+      res = rowData.ticket_description
     } else if (flag == 'solu') {
-        res = rowData.ticket_solution || ""
+      res = rowData.ticket_solution || ''
     }
 
     if (res.length > 50) {
-        return res.slice(0, 50) + "...";
+      return res.slice(0, 50) + '...'
     } else {
-        return res
+      return res
     }
   }
 
@@ -213,7 +238,7 @@ export default function TicketList({
       case 'Finished':
         return 'success'
       case 'Closed':
-        return 'success'
+        return 'danger'
       case 'In progress':
         return 'primary'
       case 'On hold':
@@ -226,81 +251,6 @@ export default function TicketList({
   }
 
   // Main operation function
-  const deleteInstance = async () => {
-    const deletedInsData = await delInsConfirm(apiModule, dataInstance.id)
-    if ('error' in deletedInsData) {
-      toast.current.show({
-        severity: 'error',
-        summary: 'Failed',
-        detail: JSON.stringify(deletedInsData),
-        life: 30000,
-      })
-    } else {
-      const listRefreshData = await fetch('/api/' + apiModule)
-      const newListData = await listRefreshData.json()
-      setListData(newListData)
-      router.refresh()
-      toast.current.show({
-        severity: 'success',
-        summary: 'Successful',
-        detail:
-          deletedInsData.ticket_title +
-          ' from ' +
-          deleteInstance.ticket_creator_hm +
-          'was deleted!',
-        life: 3000,
-      })
-    }
-    setSelectInstances(null)
-    setDeleteDialog(false)
-  }
-
-  const mutipleDeleteInstance = async () => {
-    const successArr = []
-    const failArr = []
-    for (const s of selectInstances) {
-      const deletedInsData = await delInsConfirm(apiModule, s.id)
-      if ('error' in deletedInsData) {
-        failArr.push(s)
-      } else {
-        successArr.push(s)
-      }
-    }
-
-    successArr.length &&
-      toast.current.show({
-        severity: 'success',
-        summary: 'Successful',
-        detail:
-          JSON.stringify(
-            successArr.map(
-              (item) => item.ticket_title + ' - ' + '(' + item.id + ')'
-            )
-          ) + ' deleted!',
-        life: 30000,
-      })
-
-    failArr.length &&
-      toast.current.show({
-        severity: 'error',
-        summary: 'Failed',
-        detail:
-          JSON.stringify(
-            failArr.map(
-              (item) => item.ticket_title + ' - ' + '(' + item.id + ')'
-            )
-          ) + ' not deleted!',
-        life: 30000,
-      })
-
-    const listRefreshData = await fetch('/api/' + apiModule)
-    const newListData = await listRefreshData.json()
-    setListData(newListData)
-    setMutipleDeleteDialog(false)
-    setSelectInstances(null)
-    router.refresh()
-  }
-
   async function onSubmit(data) {
     const dirtyData = dirtyValues(dirtyFields, data)
     const res = await fetch('/api/' + apiModule, {
@@ -328,6 +278,7 @@ export default function TicketList({
         detail: JSON.stringify(resData.ticket_title) + ' create Successfully!!',
         life: 3000,
       })
+      reset()
     }
   }
 
@@ -339,66 +290,19 @@ export default function TicketList({
     setListData(newPageRes)
   }
 
-  // Table delete Dialog Relative
-  const confirmDelete = (instance) => {
-    setDataInstance(instance)
-    setDeleteDialog(true)
-  }
-
-  const deleteDialogFoot = (
-    <React.Fragment>
-      <Button
-        label="No"
-        icon="pi pi-times"
-        outlined
-        onClick={() => setDeleteDialog(false)}
-      />
-      <Button
-        label="Yes"
-        icon="pi pi-check"
-        severity="danger"
-        onClick={deleteInstance}
-      />
-    </React.Fragment>
-  )
-
-  const mutipleDeleteDialogFoot = (
-    <React.Fragment>
-      <Button
-        label="No"
-        icon="pi pi-times"
-        outlined
-        onClick={() => setMutipleDeleteDialog(false)}
-      />
-      <Button
-        label="Yes"
-        icon="pi pi-check"
-        severity="danger"
-        onClick={mutipleDeleteInstance}
-      />
-    </React.Fragment>
-  )
-
   return (
     <>
       {/* show dataTabale */}
       <Toast ref={toast} />
+
       <div className="card">
-        <Toolbar
-          className="mb-4"
-          start={startToolbarTemplate}
-          end={rightToolbarTemplate}></Toolbar>
+        <Toolbar className="mb-4" start={startToolbarTemplate}></Toolbar>
         <DataTable
           dataKey="id"
           ref={dt}
           value={listData.results}
-          selection={selectInstances}
-          onSelectionChange={(e) => setSelectInstances(e.value)}
+          stripedRows
           header={header}>
-          <Column
-            selectionMode="multiple"
-            exportable={false}
-            style={{ maxWidth: '1rem' }}></Column>
           <Column
             field="id"
             header="ID"
@@ -461,11 +365,12 @@ export default function TicketList({
       {/* new instance dialog */}
       <Dialog
         visible={newInstanceDialog}
-        style={{ width: '32rem' }}
+        style={{ width: '50vw' }}
         breakpoints={{ '960px': '75vw', '641px': '90vw' }}
         header="New Ticket"
         modal
         className="p-fluid"
+        maximizable
         onHide={() => setNewInstanceDialog(false)}>
         <form
           onSubmit={handleSubmit(onSubmit)}
@@ -500,7 +405,7 @@ export default function TicketList({
             <Controller
               name="ticket_description"
               control={control}
-              rules={{ required: 'Ticket description is required.' }}
+              rules={{ required: 'Ticket Description is required.' }}
               render={({ field, fieldState }) => (
                 <>
                   <label
@@ -508,14 +413,14 @@ export default function TicketList({
                     className={classNames({
                       'p-error': errors.ticket_description,
                     })}>
-                    <b>Description</b>
+                    <b>Ticket Description</b>
                   </label>
-                  <InputTextarea
+                  <Editor
                     id={field.name}
-                    {...field}
-                    rows={4}
-                    cols={30}
+                    value={field.value}
+                    onTextChange={(e) => field.onChange(e.htmlValue)}
                     className={classNames({ 'p-invalid': fieldState.error })}
+                    style={{ height: '200px' }}
                   />
                   {getFormErrorMessage(field.name, errors)}
                 </>
@@ -558,103 +463,16 @@ export default function TicketList({
 
           <div className="field">
             <Controller
-              name="ticket_status"
+              name="ticket_assign_department"
               control={control}
-              rules={{ required: 'Ticket status is required.' }}
+              rules={{ required: 'Ticket assign department is required.' }}
               render={({ field, fieldState }) => (
                 <>
                   <label
                     htmlFor={field.name}
                     className={classNames({
-                      'p-error': errors.ticket_status,
+                      'p-error': errors.ticket_assign_department,
                     })}>
-                    <b>Ticket Status</b>
-                  </label>
-                  <Dropdown
-                    id={field.name}
-                    value={field.value}
-                    showClear
-                    filter
-                    optionLabel="label"
-                    placeholder="Select a ticket status..."
-                    options={[
-                      { value: 0, label: 'New' },
-                      { value: 1, label: 'In progress' },
-                      { value: 2, label: 'On hold' },
-                      { value: 3, label: 'Finished' },
-                      { value: 4, label: 'Rejected' },
-                      { value: 5, label: 'Closed' },
-                    ]}
-                    optionValue="value"
-                    focusInputRef={field.ref}
-                    onChange={(e) => field.onChange(e.value)}
-                    className={classNames({ 'p-invalid': fieldState.error })}
-                  />
-                  {getFormErrorMessage(field.name, errors)}
-                </>
-              )}
-            />
-          </div>
-
-          <div className="field">
-            <Controller
-              name="ticket_creator"
-              control={control}
-              render={({ field, fieldState }) => (
-                <>
-                  <label htmlFor={field.name}>
-                    <b>Ticket Creator</b>
-                  </label>
-                  <Dropdown
-                    id={field.name}
-                    value={field.value}
-                    showClear
-                    filter
-                    optionLabel="label"
-                    placeholder="Select a Creator..."
-                    options={ticketCreatorList}
-                    optionValue="value"
-                    focusInputRef={field.ref}
-                    onChange={(e) => field.onChange(e.value)}
-                  />
-                </>
-              )}
-            />
-          </div>
-
-          <div className="field">
-            <Controller
-              name="ticket_assigner"
-              control={control}
-              render={({ field, fieldState }) => (
-                <>
-                  <label htmlFor={field.name}>
-                    <b>Ticket Assigner</b>
-                  </label>
-                  <Dropdown
-                    id={field.name}
-                    value={field.value}
-                    showClear
-                    filter
-                    optionLabel="label"
-                    placeholder="Select a assigner..."
-                    options={ticketAssignerList}
-                    optionValue="value"
-                    focusInputRef={field.ref}
-                    onChange={(e) => field.onChange(e.value)}
-                  />
-                </>
-              )}
-            />
-          </div>
-
-          <div className="field">
-            <Controller
-              name="ticket_assign_department"
-              control={control}
-              render={({ field, fieldState }) => (
-                <>
-                  <label htmlFor={field.name}>
                     <b>Ticket Assign Department</b>
                   </label>
                   <Dropdown
@@ -668,7 +486,9 @@ export default function TicketList({
                     optionValue="value"
                     focusInputRef={field.ref}
                     onChange={(e) => field.onChange(e.value)}
+                    className={classNames({ 'p-invalid': fieldState.error })}
                   />
+                  {getFormErrorMessage(field.name, errors)}
                 </>
               )}
             />
@@ -689,73 +509,22 @@ export default function TicketList({
         </form>
       </Dialog>
 
-      {/* delete dialog */}
+      {/* close confirmation dialog */}
       <Dialog
-        visible={deleteDialog}
-        style={{ width: '32rem' }}
-        breakpoints={{ '960px': '75vw', '641px': '90vw' }}
-        header="Confirm"
+        header="Confirmation"
+        visible={displayConfirmation}
+        onHide={() => setDisplayConfirmation(false)}
+        style={{ width: '350px' }}
         modal
-        footer={deleteDialogFoot}
-        onHide={() => setDeleteDialog(false)}>
-        <div className="confirmation-content">
+        footer={confirmationDialogFooter}>
+        <div className="flex align-items-center justify-content-center">
           <i
             className="pi pi-exclamation-triangle mr-3"
             style={{ fontSize: '2rem' }}
           />
-          {dataInstance && (
-            <span>
-              Are you sure you want to delete <b>{dataInstance.ticket_title}</b>
-              ?<br />
-              <h4>Ticket Details</h4>
-              <br />
-              Ticket ID: <span className="font-bold">{dataInstance.id}</span>
-              <br />
-              Ticket Creator:{' '}
-              <span className="font-bold">
-                {dataInstance.ticket_creator_hm}
-              </span>
-              <br />
-              Ticket Title:{' '}
-              <span className="font-bold">{dataInstance.ticket_title}</span>
-              <br />
-              Ticket Description:{' '}
-              <span className="font-bold">
-                {dataInstance.ticket_description}
-              </span>
-            </span>
-          )}
-        </div>
-      </Dialog>
-
-      {/* mutiple delete dialog */}
-      <Dialog
-        visible={mutipleDeleteDialog}
-        style={{ width: '32rem' }}
-        breakpoints={{ '960px': '75vw', '641px': '90vw' }}
-        header="Confirm"
-        modal
-        footer={mutipleDeleteDialogFoot}
-        onHide={() => setMutipleDeleteDialog(false)}>
-        <div className="confirmation-content">
-          <i
-            className="pi pi-exclamation-triangle mr-3"
-            style={{ fontSize: '2rem' }}
-          />
-          {selectInstances && (
-            <span>
-              Are you sure you want to delete the selected items?
-              <h4>Items List Details - Name(ID)</h4>
-              {selectInstances.map((item) => (
-                <>
-                  <strong style={{ 'fontSize?': '150%' }} key={item.id}>
-                    {item.ticket_title} ({item.id})
-                  </strong>
-                  <br />
-                </>
-              ))}
-            </span>
-          )}
+          <span>
+            Are you sure you want to Close this Ticket - {delInstances?.id}?
+          </span>
         </div>
       </Dialog>
     </>

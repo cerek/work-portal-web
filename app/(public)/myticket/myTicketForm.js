@@ -9,19 +9,16 @@ import { Button } from 'primereact/button'
 import { Dropdown } from 'primereact/dropdown'
 import { Toast } from 'primereact/toast'
 import { Editor } from 'primereact/editor'
-import { InputNumber } from 'primereact/inputnumber'
 import { Checkbox } from 'primereact/checkbox'
 import { classNames } from 'primereact/utils'
 import Uploader from '@/components/uploader/page'
 import { dirtyValues, getFormErrorMessage } from '@/lib/utils/page'
 
-export default function TicketForm({
+export default function MyTicketForm({
   formType,
   ticketIns,
   ticketId,
   ticketTypeList,
-  ticketCreatorList,
-  ticketAssignerList,
   ticketAssignDepartment,
 }) {
   const router = useRouter()
@@ -33,21 +30,16 @@ export default function TicketForm({
     initDefaultValues = {
       ticket_title: '',
       ticket_description: '',
-      ticket_solution: '',
-      ticket_status: 0,
-      ticket_creator: null,
-      ticket_assigner: null,
       ticket_assign_department: null,
       ticket_type: null,
-      ticket_attachment: [],
     }
 
     httpMethod = 'POST'
-    endPointUrl = '/api/ticket'
+    endPointUrl = '/api/myticket'
   } else if (formType === 'update') {
     initDefaultValues = ticketIns
     httpMethod = 'PATCH'
-    endPointUrl = '/api/ticket/' + ticketId
+    endPointUrl = '/api/myticket/' + ticketId
   }
   const {
     handleSubmit,
@@ -98,7 +90,7 @@ export default function TicketForm({
       })
     } else {
       const resData = await res.json()
-      router.push('/ticket')
+      router.push('/myticket')
       router.refresh()
       toast.current.show({
         severity: 'success',
@@ -169,72 +161,6 @@ export default function TicketForm({
 
             <div className="field col-12 md:col-6">
               <Controller
-                name="ticket_creator"
-                control={control}
-                rules={{ required: 'Ticket Creator is required.' }}
-                render={({ field, fieldState }) => (
-                  <>
-                    <label
-                      htmlFor={field.name}
-                      className={classNames({
-                        'p-error': errors.ticket_creator,
-                      })}>
-                      <b>Ticket Creator</b>
-                    </label>
-                    <Dropdown
-                      id={field.name}
-                      value={field.value}
-                      showClear
-                      filter
-                      optionLabel="label"
-                      placeholder="Select a Ticket Creator..."
-                      options={ticketCreatorList}
-                      optionValue="value"
-                      focusInputRef={field.ref}
-                      onChange={(e) => field.onChange(e.value)}
-                      className={classNames({ 'p-invalid': fieldState.error })}
-                    />
-                    {getFormErrorMessage(field.name, errors)}
-                  </>
-                )}
-              />
-            </div>
-
-            <div className="field col-12 md:col-6">
-              <Controller
-                name="ticket_assigner"
-                control={control}
-                rules={{ required: 'Ticket Assigner is required.' }}
-                render={({ field, fieldState }) => (
-                  <>
-                    <label
-                      htmlFor={field.name}
-                      className={classNames({
-                        'p-error': errors.ticket_assigner,
-                      })}>
-                      <b>Ticket Assigner</b>
-                    </label>
-                    <Dropdown
-                      id={field.name}
-                      value={field.value}
-                      showClear
-                      filter
-                      optionLabel="label"
-                      placeholder="Select a Ticket Assigner..."
-                      options={ticketAssignerList}
-                      optionValue="value"
-                      focusInputRef={field.ref}
-                      onChange={(e) => field.onChange(e.value)}
-                      className={classNames({ 'p-invalid': fieldState.error })}
-                    />
-                    {getFormErrorMessage(field.name, errors)}
-                  </>
-                )}
-              />
-            </div>
-
-            <div className="field col-12 md:col-6">
-              <Controller
                 name="ticket_assign_department"
                 control={control}
                 rules={{ required: 'Ticket Assigner is required.' }}
@@ -259,44 +185,6 @@ export default function TicketForm({
                       focusInputRef={field.ref}
                       onChange={(e) => field.onChange(e.value)}
                       className={classNames({ 'p-invalid': fieldState.error })}
-                    />
-                    {getFormErrorMessage(field.name, errors)}
-                  </>
-                )}
-              />
-            </div>
-
-            <div className="field col-12 md:col-6">
-              <Controller
-                name="ticket_rating"
-                control={control}
-                // rules={{
-                //   required: 'Enter a valid Rating.',
-                //   validate: (value) =>
-                //     (value >= 1 && value <= 5) || 'Enter a valid Rating.',
-                // }}
-                render={({ field, fieldState }) => (
-                  <>
-                    <label
-                      htmlFor={field.name}
-                      className={classNames({
-                        'p-error': errors.ticket_rating,
-                      })}>
-                      <b>Titcket Rating</b>
-                    </label>
-                    <InputNumber
-                      id={field.name}
-                      value={field.value || 0}
-                      onValueChange={(e) => field.onChange(e.target.value)}
-                      showButtons
-                      buttonLayout="horizontal"
-                      step={1}
-                      min={0}
-                      max={5}
-                      decrementButtonClassName="p-button-danger"
-                      incrementButtonClassName="p-button-success"
-                      incrementButtonIcon="pi pi-plus"
-                      decrementButtonIcon="pi pi-minus"
                     />
                     {getFormErrorMessage(field.name, errors)}
                   </>
@@ -337,47 +225,7 @@ export default function TicketForm({
               />
             </div>
 
-            <div className="field col-12 md:col-6">
-              <Controller
-                name="ticket_status"
-                control={control}
-                rules={{ required: 'Ticket Status is required.' }}
-                render={({ field, fieldState }) => (
-                  <>
-                    <label
-                      htmlFor={field.name}
-                      className={classNames({
-                        'p-error': errors.ticket_assigner,
-                      })}>
-                      <b>Ticket Status</b>
-                    </label>
-                    <Dropdown
-                      id={field.name}
-                      value={field.value}
-                      showClear
-                      filter
-                      optionLabel="label"
-                      placeholder="Select a Ticket Status..."
-                      options={[
-                        { value: 0, label: 'New' },
-                        { value: 1, label: 'In progress' },
-                        { value: 2, label: 'On hold' },
-                        { value: 3, label: 'Finished' },
-                        { value: 4, label: 'Rejected' },
-                        { value: 5, label: 'Closed' },
-                      ]}
-                      optionValue="value"
-                      focusInputRef={field.ref}
-                      onChange={(e) => field.onChange(e.value)}
-                      className={classNames({ 'p-invalid': fieldState.error })}
-                    />
-                    {getFormErrorMessage(field.name, errors)}
-                  </>
-                )}
-              />
-            </div>
-
-            <div className="field col-12 md:col-6">
+            <div className="field col-12">
               <Controller
                 name="ticket_description"
                 control={control}
@@ -403,38 +251,12 @@ export default function TicketForm({
               />
             </div>
 
-            <div className="field col-12 md:col-6">
-              <Controller
-                name="ticket_solution"
-                control={control}
-                rules={{ required: 'Ticket Solution is required.' }}
-                render={({ field, fieldState }) => (
-                  <>
-                    <label
-                      htmlFor={field.name}
-                      className={classNames({
-                        'p-error': errors.ticket_solution,
-                      })}>
-                      <b>Ticket Solution</b>
-                    </label>
-                    <Editor
-                      id={field.name}
-                      value={field.value}
-                      onTextChange={(e) => field.onChange(e.htmlValue)}
-                      style={{ height: '400px' }}
-                    />
-                    {getFormErrorMessage(field.name, errors)}
-                  </>
-                )}
-              />
-            </div>
-
             {formType === 'update' && (
               <div className="field col-12 md:col-6">
                 <label>
                   <b>Ticket Uploaded Attachments</b>
                 </label>
-                {ticketIns.ticket_attachment_hm.map((tick) => {
+                {ticketIns?.ticket_attachment_hm?.map((tick) => {
                   return (
                     <div
                       key={tick.id}
