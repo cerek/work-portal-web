@@ -1,18 +1,16 @@
 import EmployeeForm from '../../employeeForm'
 import serverSideFetch from '@/lib/serverFetchData/page'
+import fetchSelectBoxData from '@/lib/fetchSelectBoxData/page'
 import NewBreadCrumb from '@/components/breadCrumb/page'
+import ErrorPage from '@/components/errorBlock/page'
 
 export default async function EmployeeUpdatePage({ params }) {
-  const locationListRes = await serverSideFetch('/location/')
-  const locationList = locationListRes.results.map(function (element) {
-    return { value: element.id, label: element.location_name }
-  })
-  const departmentListRes = await serverSideFetch('/department/')
-  const departmentList = departmentListRes.results.map(function (element) {
-    return { value: element.id, label: element.department.name }
-  })
-  
   const employeeInsRes = await serverSideFetch('/employee/' + params.id + '/')
+  if ('error' in employeeInsRes) return ( <ErrorPage errMsg={JSON.stringify(employeeInsRes.error)} /> )
+
+  const locationList = await fetchSelectBoxData('/selectbox/location/?page_size=500')
+  const departmentList = await fetchSelectBoxData('/selectbox/department/?page_size=500')
+
   const employeeIns = {
     ...employeeInsRes,
     employee_work_location: employeeInsRes.employee_work_location.id,

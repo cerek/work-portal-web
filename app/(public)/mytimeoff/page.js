@@ -1,14 +1,13 @@
 import MyTimeoffList from './myTimeoffList'
 import serverSideFetch from '@/lib/serverFetchData/page'
+import fetchSelectBoxData from '@/lib/fetchSelectBoxData/page'
 import NewBreadCrumb from '@/components/breadCrumb/page'
 
 export default async function MyTimeoffPage() {
   const timeoffList = await serverSideFetch('/mytimeoff/')
+  if ('error' in timeoffList) return ( <ErrorPage errMsg={JSON.stringify(timeoffList.error)} /> )
 
-  const timeoffTypeListRes = await serverSideFetch('/timeofftype/?page_size=500')
-  const timeoffTypeList = timeoffTypeListRes.results.map(function (element) {
-    return { value: element.id, label: element.timeoff_type_name }
-  })
+  const timeoffTypeList = await fetchSelectBoxData('/selectbox/timeofftype/?page_size=500')
 
   return (
     <div className="grid">

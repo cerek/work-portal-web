@@ -1,25 +1,24 @@
 import MyTicketList from './myTicketList'
 import serverSideFetch from '@/lib/serverFetchData/page'
+import fetchSelectBoxData from '@/lib/fetchSelectBoxData/page'
 import NewBreadCrumb from '@/components/breadCrumb/page'
+import ErrorPage from '@/components/errorBlock/page'
 
 export default async function MyTicketPage() {
   const ticketList = await serverSideFetch('/myticket/')
-
-  const ticketTypeListRes = await serverSideFetch('/tickettype/?page_size=500')
-  const ticketTypeList = ticketTypeListRes.results.map(function (element) {
-    return { value: element.id, label: element.ticket_type_name }
-  })
-
-  const departmentListRes = await serverSideFetch('/department/?page_size=500')
-  const departmentList = departmentListRes.results.map(function (element) {
-    return { value: element.id, label: element.department.name }
-  })
+  if ('error' in ticketList) return <ErrorPage errMsg={JSON.stringify(ticketList.error)} />
+  const ticketTypeList = await fetchSelectBoxData('/selectbox/tickettype/?page_size=500')
+  const departmentList = await fetchSelectBoxData('/selectbox/department/?page_size=500')
 
   return (
     <div className="grid">
       <NewBreadCrumb />
       <div className="col-12">
-        <MyTicketList ticketList={ticketList} ticketTypeList={ticketTypeList} ticketAssignDepartment={departmentList} />
+        <MyTicketList
+          ticketList={ticketList}
+          ticketTypeList={ticketTypeList}
+          ticketAssignDepartment={departmentList}
+        />
       </div>
     </div>
   )

@@ -1,16 +1,11 @@
 import EmployeeForm from '../employeeForm'
-import serverSideFetch from '@/lib/serverFetchData/page'
+import fetchSelectBoxData from '@/lib/fetchSelectBoxData/page'
 import NewBreadCrumb from '@/components/breadCrumb/page'
 
 export default async function EmployeeCreatePage() {
-  const locationListRes = await serverSideFetch('/location/')
-  const locationList = locationListRes.results.map(function (element) {
-    return { value: element.id, label: element.location_name }
-  })
-  const departmentListRes = await serverSideFetch('/department/')
-  const departmentList = departmentListRes.results.map(function (element) {
-    return { value: element.id, label: element.department.name }
-  })
+  // Need the check permission implementation with back-end for prevent show the page
+  const locationList = await fetchSelectBoxData('/selectbox/location/?page_size=500')
+  const departmentList = await fetchSelectBoxData('/selectbox/department/?page_size=500')
 
   return (
     <div className="grid">

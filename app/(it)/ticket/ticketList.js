@@ -3,7 +3,6 @@
 import Link from 'next/link'
 import React, { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { useForm, Controller } from 'react-hook-form'
 import { DataTable } from 'primereact/datatable'
 import { Column } from 'primereact/column'
 import { Toast } from 'primereact/toast'
@@ -11,41 +10,15 @@ import { Button } from 'primereact/button'
 import { Toolbar } from 'primereact/toolbar'
 import { Dialog } from 'primereact/dialog'
 import { InputText } from 'primereact/inputtext'
-import { InputTextarea } from 'primereact/inputtextarea'
-import { Dropdown } from 'primereact/dropdown'
 import { Tag } from 'primereact/tag'
 import { Paginator } from 'primereact/paginator'
-import { classNames } from 'primereact/utils'
-import {
-  searchList,
-  pageControl,
-  delInsConfirm,
-  dirtyValues,
-  getFormErrorMessage,
-} from '@/lib/utils/page'
+import { searchList, pageControl, delInsConfirm } from '@/lib/utils/page'
 
-export default function TicketList({
-  ticketList,
-  ticketTypeList,
-  ticketCreatorList,
-  ticketAssignerList,
-  ticketAssignDepartment,
-}) {
-  const initDefaultValues = {
-    ticket_title: '',
-    ticket_description: '',
-    ticket_solution: '',
-    ticket_status: 0,
-    ticket_creator: '',
-    ticket_assigner: '',
-    ticket_assign_department: '',
-    ticket_type: null,
-  }
+export default function TicketList({ ticketList }) {
   const apiModule = 'ticket'
   const dt = useRef(null)
   const toast = useRef(null)
   const router = useRouter()
-  const [newInstanceDialog, setNewInstanceDialog] = useState(false)
   const [globalFilter, setGlobalFilter] = useState('')
   const [dataInstance, setDataInstance] = useState({})
   const [deleteDialog, setDeleteDialog] = useState(false)
@@ -54,14 +27,6 @@ export default function TicketList({
   const [selectInstances, setSelectInstances] = useState(null)
   const [firstPage, setFirstPage] = useState(0)
   const [pageRows, setPageRows] = useState(10)
-  const {
-    handleSubmit,
-    formState: { dirtyFields, errors },
-    reset,
-    control,
-  } = useForm({
-    defaultValues: initDefaultValues,
-  })
 
   // Table Header and Toolbar
   const exportCSV = () => {
@@ -194,15 +159,15 @@ export default function TicketList({
   const shortBodyTemplate = (rowData, flag) => {
     let res = ''
     if (flag == 'desc') {
-        res = rowData.ticket_description
+      res = rowData.ticket_description
     } else if (flag == 'solu') {
-        res = rowData.ticket_solution || ""
+      res = rowData.ticket_solution || ''
     }
 
     if (res.length > 50) {
-        return res.slice(0, 50) + "...";
+      return res.slice(0, 50) + '...'
     } else {
-        return res
+      return res
     }
   }
 
@@ -299,36 +264,6 @@ export default function TicketList({
     setMutipleDeleteDialog(false)
     setSelectInstances(null)
     router.refresh()
-  }
-
-  async function onSubmit(data) {
-    const dirtyData = dirtyValues(dirtyFields, data)
-    const res = await fetch('/api/' + apiModule, {
-      method: 'POST',
-      body: JSON.stringify(dirtyData),
-    })
-    if (!res.ok) {
-      const resData = await res.json()
-      toast.current.show({
-        severity: 'error',
-        summary: 'Failed',
-        detail: JSON.stringify(resData),
-        life: 30000,
-      })
-    } else {
-      const resData = await res.json()
-      const listRefreshData = await fetch('/api/' + apiModule)
-      const newListData = await listRefreshData.json()
-      setListData(newListData)
-      router.refresh()
-      setNewInstanceDialog(false)
-      toast.current.show({
-        severity: 'success',
-        summary: 'Successful',
-        detail: JSON.stringify(resData.ticket_title) + ' create Successfully!!',
-        life: 3000,
-      })
-    }
   }
 
   const onPage = async (event) => {
@@ -457,237 +392,6 @@ export default function TicketList({
             'Showing {first} to {last} of {totalRecords} products'
           }></Paginator>
       </div>
-
-      {/* new instance dialog */}
-      <Dialog
-        visible={newInstanceDialog}
-        style={{ width: '32rem' }}
-        breakpoints={{ '960px': '75vw', '641px': '90vw' }}
-        header="New Ticket"
-        modal
-        className="p-fluid"
-        onHide={() => setNewInstanceDialog(false)}>
-        <form
-          onSubmit={handleSubmit(onSubmit)}
-          className="flex flex-column gap-2">
-          <div className="field">
-            <Controller
-              name="ticket_title"
-              control={control}
-              rules={{ required: 'Ticket Title is required.' }}
-              render={({ field, fieldState }) => (
-                <>
-                  <label
-                    htmlFor={field.name}
-                    className={classNames({
-                      'p-error': errors.ticket_title,
-                    })}>
-                    <b>Ticket Title</b>
-                  </label>
-                  <InputText
-                    id={field.name}
-                    value={field.value}
-                    className={classNames({ 'p-invalid': fieldState.error })}
-                    onChange={(e) => field.onChange(e.target.value)}
-                  />
-                  {getFormErrorMessage(field.name, errors)}
-                </>
-              )}
-            />
-          </div>
-
-          <div className="field">
-            <Controller
-              name="ticket_description"
-              control={control}
-              rules={{ required: 'Ticket description is required.' }}
-              render={({ field, fieldState }) => (
-                <>
-                  <label
-                    htmlFor={field.name}
-                    className={classNames({
-                      'p-error': errors.ticket_description,
-                    })}>
-                    <b>Description</b>
-                  </label>
-                  <InputTextarea
-                    id={field.name}
-                    {...field}
-                    rows={4}
-                    cols={30}
-                    className={classNames({ 'p-invalid': fieldState.error })}
-                  />
-                  {getFormErrorMessage(field.name, errors)}
-                </>
-              )}
-            />
-          </div>
-
-          <div className="field">
-            <Controller
-              name="ticket_type"
-              control={control}
-              rules={{ required: 'Ticket type is required.' }}
-              render={({ field, fieldState }) => (
-                <>
-                  <label
-                    htmlFor={field.name}
-                    className={classNames({
-                      'p-error': errors.ticket_type,
-                    })}>
-                    <b>Ticket Type</b>
-                  </label>
-                  <Dropdown
-                    id={field.name}
-                    value={field.value}
-                    showClear
-                    filter
-                    optionLabel="label"
-                    placeholder="Select a ticket type..."
-                    options={ticketTypeList}
-                    optionValue="value"
-                    focusInputRef={field.ref}
-                    onChange={(e) => field.onChange(e.value)}
-                    className={classNames({ 'p-invalid': fieldState.error })}
-                  />
-                  {getFormErrorMessage(field.name, errors)}
-                </>
-              )}
-            />
-          </div>
-
-          <div className="field">
-            <Controller
-              name="ticket_status"
-              control={control}
-              rules={{ required: 'Ticket status is required.' }}
-              render={({ field, fieldState }) => (
-                <>
-                  <label
-                    htmlFor={field.name}
-                    className={classNames({
-                      'p-error': errors.ticket_status,
-                    })}>
-                    <b>Ticket Status</b>
-                  </label>
-                  <Dropdown
-                    id={field.name}
-                    value={field.value}
-                    showClear
-                    filter
-                    optionLabel="label"
-                    placeholder="Select a ticket status..."
-                    options={[
-                      { value: 0, label: 'New' },
-                      { value: 1, label: 'In progress' },
-                      { value: 2, label: 'On hold' },
-                      { value: 3, label: 'Finished' },
-                      { value: 4, label: 'Rejected' },
-                      { value: 5, label: 'Closed' },
-                    ]}
-                    optionValue="value"
-                    focusInputRef={field.ref}
-                    onChange={(e) => field.onChange(e.value)}
-                    className={classNames({ 'p-invalid': fieldState.error })}
-                  />
-                  {getFormErrorMessage(field.name, errors)}
-                </>
-              )}
-            />
-          </div>
-
-          <div className="field">
-            <Controller
-              name="ticket_creator"
-              control={control}
-              render={({ field, fieldState }) => (
-                <>
-                  <label htmlFor={field.name}>
-                    <b>Ticket Creator</b>
-                  </label>
-                  <Dropdown
-                    id={field.name}
-                    value={field.value}
-                    showClear
-                    filter
-                    optionLabel="label"
-                    placeholder="Select a Creator..."
-                    options={ticketCreatorList}
-                    optionValue="value"
-                    focusInputRef={field.ref}
-                    onChange={(e) => field.onChange(e.value)}
-                  />
-                </>
-              )}
-            />
-          </div>
-
-          <div className="field">
-            <Controller
-              name="ticket_assigner"
-              control={control}
-              render={({ field, fieldState }) => (
-                <>
-                  <label htmlFor={field.name}>
-                    <b>Ticket Assigner</b>
-                  </label>
-                  <Dropdown
-                    id={field.name}
-                    value={field.value}
-                    showClear
-                    filter
-                    optionLabel="label"
-                    placeholder="Select a assigner..."
-                    options={ticketAssignerList}
-                    optionValue="value"
-                    focusInputRef={field.ref}
-                    onChange={(e) => field.onChange(e.value)}
-                  />
-                </>
-              )}
-            />
-          </div>
-
-          <div className="field">
-            <Controller
-              name="ticket_assign_department"
-              control={control}
-              render={({ field, fieldState }) => (
-                <>
-                  <label htmlFor={field.name}>
-                    <b>Ticket Assign Department</b>
-                  </label>
-                  <Dropdown
-                    id={field.name}
-                    value={field.value}
-                    showClear
-                    filter
-                    optionLabel="label"
-                    placeholder="Select a assign department..."
-                    options={ticketAssignDepartment}
-                    optionValue="value"
-                    focusInputRef={field.ref}
-                    onChange={(e) => field.onChange(e.value)}
-                  />
-                </>
-              )}
-            />
-          </div>
-
-          <div className="flex flex-wrap justify-content-center gap-2 mb-2">
-            <Button raised rounded label="Create" type="submit"></Button>
-            <Button
-              raised
-              rounded
-              label="Reset"
-              severity="danger"
-              onClick={() => {
-                reset()
-              }}
-              type="button"></Button>
-          </div>
-        </form>
-      </Dialog>
 
       {/* delete dialog */}
       <Dialog

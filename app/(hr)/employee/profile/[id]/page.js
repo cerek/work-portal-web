@@ -7,11 +7,13 @@ export default async function EmployeeProfilePage({ params }) {
   const employeeDetail = await serverSideFetch(
     '/employee/profile/' + params.id + '/'
   )
+  if ('error' in employeeDetail) return ( <ErrorPage errMsg={JSON.stringify(employeeDetail.error)} /> )
+
 
   return (
     <div className="grid">
       <NewBreadCrumb />
-      {'error' in employeeDetail ? <ErrorPage errMsg={JSON.stringify(employeeDetail.error)} /> : <EmployeeProfile employeeDetail={employeeDetail} />}
+      <EmployeeProfile employeeDetail={employeeDetail} />
     </div>
   )
 }

@@ -1,19 +1,15 @@
 import TimeoffList from './timeoffList'
 import serverSideFetch from '@/lib/serverFetchData/page'
+import fetchSelectBoxData from '@/lib/fetchSelectBoxData/page'
 import NewBreadCrumb from '@/components/breadCrumb/page'
+import ErrorPage from '@/components/errorBlock/page'
 
 export default async function LocationPage() {
   const timeoffList = await serverSideFetch('/timeoff/')
+  if ('error' in timeoffList) return ( <ErrorPage errMsg={JSON.stringify(timeoffList.error)} /> )
 
-  const timeoffTypeListRes = await serverSideFetch('/timeofftype/?page_size=500')
-  const timeoffTypeList = timeoffTypeListRes.results.map(function (element) {
-    return { value: element.id, label: element.timeoff_type_name }
-  })
-
-  const employeeListRes = await serverSideFetch('/employee/?page_size=500')
-  const employeeList = employeeListRes.results.map(function (element) {
-    return { value: element.id, label: element.employee.username }
-  })
+  const timeoffTypeList = await fetchSelectBoxData('/selectbox/timeofftype/?page_size=500')
+  const employeeList = await fetchSelectBoxData('/selectbox/employee/?page_size=500')
 
   return (
     <div className="grid">
