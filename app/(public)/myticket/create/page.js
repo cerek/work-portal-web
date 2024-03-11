@@ -1,4 +1,5 @@
 import NewBreadCrumb from '@/components/breadCrumb/page'
+import fetchSelectBoxData from '@/lib/fetchSelectBoxData/page'
 import MyTicketForm from '../myTicketForm'
 
 export default async function MyTicketCreatePage() {

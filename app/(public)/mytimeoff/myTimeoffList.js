@@ -393,7 +393,7 @@ export default function MyTimeoffList({ timeoffList, timeoffTypeList }) {
           onPageChange={onPage}
           template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
           currentPageReportTemplate={
-            'Showing {first} to {last} of {totalRecords} products'
+            'Showing {first} to {last} of {totalRecords} timeoffs'
           }></Paginator>
       </div>
 
