@@ -204,7 +204,6 @@ export default function TicketForm({
               <Controller
                 name="ticket_assigner"
                 control={control}
-                rules={{ required: 'Ticket Assigner is required.' }}
                 render={({ field, fieldState }) => (
                   <>
                     <label
@@ -237,7 +236,7 @@ export default function TicketForm({
               <Controller
                 name="ticket_assign_department"
                 control={control}
-                rules={{ required: 'Ticket Assigner is required.' }}
+                rules={{ required: 'Ticket Assign department is required.' }}
                 render={({ field, fieldState }) => (
                   <>
                     <label
@@ -407,7 +406,6 @@ export default function TicketForm({
               <Controller
                 name="ticket_solution"
                 control={control}
-                rules={{ required: 'Ticket Solution is required.' }}
                 render={({ field, fieldState }) => (
                   <>
                     <label

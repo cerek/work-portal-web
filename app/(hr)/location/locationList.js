@@ -411,7 +411,7 @@ export default function LocationList({ locationList }) {
           onPageChange={onPage}
           template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
           currentPageReportTemplate={
-            'Showing {first} to {last} of {totalRecords} products'
+            'Showing {first} to {last} of {totalRecords} locations'
           }></Paginator>
       </div>
 

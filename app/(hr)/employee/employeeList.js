@@ -386,7 +386,7 @@ export default function EmployeeList({ employeeList }) {
           onPageChange={onPage}
           template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
           currentPageReportTemplate={
-            'Showing {first} to {last} of {totalRecords} products'
+            'Showing {first} to {last} of {totalRecords} employee'
           }></Paginator>
       </div>
 

@@ -443,7 +443,7 @@ export default function DepartmentList({ departmentList }) {
           onPageChange={onPage}
           template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
           currentPageReportTemplate={
-            'Showing {first} to {last} of {totalRecords} products'
+            'Showing {first} to {last} of {totalRecords} department'
           }></Paginator>
       </div>
 
