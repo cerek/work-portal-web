@@ -1,6 +1,7 @@
 import NextAuth from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import axios from 'axios'
+import { userAgent } from 'next/server'
 
 const BACKEND_ACCESS_TOKEN_LIFETIME = 60 * 60
 const BACKEND_REFRESH_TOKEN_LIFETIME = 1 * 24 * 60 * 60
@@ -25,10 +26,16 @@ export const authOptions = {
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials, req) {
+        const ua = req.headers['user-agent']
+        const clientIp = req.headers['x-forwarded-for']
         try {
           const response = await axios({
             url: process.env.NEXTAUTH_BACKEND_URL + '/login/',
             method: 'post',
+            headers: {
+              'User-Agent': ua,
+              'User-Ip-Address': clientIp,
+            },
             data: credentials,
           })
           const data = response.data

@@ -1,6 +1,6 @@
 "use client"
 import React, { useContext, useState, useRef } from "react"
-import { useSearchParams, useRouter } from "next/navigation"
+import { useSearchParams, redirect } from "next/navigation"
 import { signIn, useSession } from 'next-auth/react'
 import { Checkbox } from "primereact/checkbox"
 import { Button } from "primereact/button"
@@ -17,13 +17,12 @@ export default function AuthLogin() {
   const [checked, setChecked] = useState(false)
   const { layoutConfig } = useContext(LayoutContext)
   const errMsg = useRef(null)
-  const router = useRouter()
   const { data: session, status } = useSession()
   if (status === "authenticated") {
-    router.push('/employee/profile/' + session?.user?.user.employee)
+    redirect('/employee/profile/' + session?.user?.user.employee)
   }
   const searchParams = useSearchParams()
-  let callbackUrl = searchParams.get('callbackUrl') || '/employee/profile/' + session?.user?.user.employee
+  let callbackUrl = searchParams.get('callbackUrl') || '/myticket'
   
   const containerClassName = classNames(
     "surface-ground flex align-items-center justify-content-center min-h-screen min-w-screen overflow-hidden",
@@ -34,10 +33,10 @@ export default function AuthLogin() {
     e.preventDefault()
     try {
       const res = await signIn('credentials', {
-        redirect: false,
+        redirect: true,
         email: email,
         password: password,
-        callbackUrl,
+        callbackUrl: callbackUrl,
       })
 
       if (res?.error) {
