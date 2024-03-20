@@ -1,8 +1,10 @@
-import { NextResponse } from 'next/server'
+import { NextResponse, userAgent } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/app/api/auth/[...nextauth]/route'
 
 export async function GET(req, { params }) {
+  const { ua } = userAgent(req)
+  const clientIp = req.headers.get('x-forwarded-for')
   const token = await getServerSession(authOptions)
   const id = params.id
   const res = await fetch(
@@ -11,6 +13,8 @@ export async function GET(req, { params }) {
       headers: {
         Authorization: 'Bearer ' + token.user.access,
         'Content-Type': 'application/json',
+        'User-Agent': ua,
+        'User-Ip-Address': clientIp,
       },
     }
   )
@@ -27,6 +31,8 @@ export async function GET(req, { params }) {
 
 
 export async function PUT(req, { params }) {
+  const { ua } = userAgent(req)
+  const clientIp = req.headers.get('x-forwarded-for')
   const token = await getServerSession(authOptions)
   const post_data = await req.json()
   const id = params.id
@@ -36,6 +42,8 @@ export async function PUT(req, { params }) {
     headers: {
       'Authorization': 'Bearer ' + token.user.access,
       'Content-Type': 'application/json',
+      'User-Agent': ua,
+      'User-Ip-Address': clientIp,
     },
     body: JSON.stringify(post_data)
   })
@@ -52,6 +60,8 @@ export async function PUT(req, { params }) {
 
 
 export async function PATCH(req, { params }) {
+  const { ua } = userAgent(req)
+  const clientIp = req.headers.get('x-forwarded-for')
   const token = await getServerSession(authOptions)
   const post_data = await req.json()
   const id = params.id
@@ -61,6 +71,8 @@ export async function PATCH(req, { params }) {
     headers: {
       'Authorization': 'Bearer ' + token.user.access,
       'Content-Type': 'application/json',
+      'User-Agent': ua,
+      'User-Ip-Address': clientIp,
     },
     body: JSON.stringify(post_data)
   })
@@ -77,6 +89,8 @@ export async function PATCH(req, { params }) {
 
 
 export async function DELETE(req, { params }) {
+  const { ua } = userAgent(req)
+  const clientIp = req.headers.get('x-forwarded-for')
   const token = await getServerSession(authOptions)
   const id = params.id
   const res = await fetch(
@@ -86,6 +100,8 @@ export async function DELETE(req, { params }) {
       headers: {
         Authorization: 'Bearer ' + token.user.access,
         'Content-Type': 'application/json',
+        'User-Agent': ua,
+        'User-Ip-Address': clientIp,
       },
     }
   )
