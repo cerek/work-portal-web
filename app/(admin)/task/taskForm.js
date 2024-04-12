@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useForm, Controller } from 'react-hook-form'
 import { InputText } from 'primereact/inputtext'
 import { InputNumber } from 'primereact/inputnumber'
+import { InputTextarea } from 'primereact/inputtextarea'
 import { Button } from 'primereact/button'
 import { Dropdown } from 'primereact/dropdown'
 import { Toast } from 'primereact/toast'
@@ -527,6 +528,25 @@ export default function TaskForm({ formType, taskIns, taskId }) {
                 </div>
               </div>
             )}
+
+            <div className="field col-12">
+              <Controller
+                name="description"
+                control={control}
+                render={({ field, fieldState }) => (
+                  <>
+                    <label htmlFor={field.name}>Description</label>
+                    <InputTextarea
+                      id={field.name}
+                      {...field}
+                      rows={6}
+                      cols={30}
+                      className={classNames({ 'p-invalid': fieldState.error })}
+                    />
+                  </>
+                )}
+              />
+            </div>
           </div>
 
           <div className="field col-12">

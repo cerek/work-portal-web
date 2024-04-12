@@ -13,7 +13,7 @@ import { Tag } from 'primereact/tag'
 import { Sidebar } from 'primereact/sidebar'
 import { searchList, pageControl } from '@/lib/utils/page'
 
-export default function SystemLogsList({ taskList }) {
+export default function TaskList({ taskList }) {
   const apiModule = 'task'
   const dt = useRef(null)
   const toast = useRef(null)
@@ -132,6 +132,14 @@ export default function SystemLogsList({ taskList }) {
             severity="warning"
           />
         </Link>
+        <Link href={'/task/result/' + rowData.name}>
+          <Button
+            icon="pi pi-comments"
+            rounded
+            className="mr-2"
+            severity="warning"
+          />
+        </Link>
       </React.Fragment>
     )
   }
@@ -203,7 +211,7 @@ export default function SystemLogsList({ taskList }) {
           <Column
             header="Task Periodic"
             body={periodicBodyTemplate}
-            style={{ minWidth: '3rem' }}></Column>
+            style={{ maxWidth: '9rem' }}></Column>
           <Column
             header="One Off"
             className="font-bold text-xl"
@@ -219,8 +227,7 @@ export default function SystemLogsList({ taskList }) {
             style={{ minWidth: '4rem' }}></Column>
           <Column
             body={actionBodyTemplate}
-            exportable={false}
-            style={{ minWidth: '3rem' }}></Column>
+            style={{ minWidth: '4rem' }}></Column>
         </DataTable>
         <Paginator
           first={firstPage}
