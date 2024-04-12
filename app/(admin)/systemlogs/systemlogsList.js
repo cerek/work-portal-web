@@ -19,6 +19,8 @@ export default function SystemLogsList({ systemLogsList }) {
   const opRequest = useRef(null)
   const opResponse = useRef(null)
   const [globalFilter, setGlobalFilter] = useState('')
+  const [requestBody, setRequestBody] = useState('')
+  const [responseBody, setResponseBody] = useState('')
   const [listData, setListData] = useState(systemLogsList)
   const [firstPage, setFirstPage] = useState(0)
   const [pageRows, setPageRows] = useState(10)
@@ -70,11 +72,35 @@ export default function SystemLogsList({ systemLogsList }) {
     return <Tag severity={severityLevel}>{rowData.systemlog_response_code}</Tag>
   }
 
+  const getRequestResponseBody = async (getType, id, e) => {
+    const logDataRes = await fetch('/api/' + apiModule + '/' + id)
+    const logData = await logDataRes.json()
+    if (!logDataRes.ok) {
+      toast.current.show({
+        severity: 'error',
+        summary: 'Failed',
+        detail: JSON.stringify(logData),
+        life: 30000,
+      })
+    } else {
+      if (getType === 'request') {
+        var formatBody = logData.systemlog_request_body.replaceAll("'", '"')
+        var parseJSON = JSON.parse(formatBody)
+        var prettyJSON = JSON.stringify(parseJSON, undefined, 2)
+        setRequestBody(prettyJSON)
+        opRequest.current.toggle(e)
+      } else if (getType === 'response') {
+        var formatBody = logData.systemlog_response_context.replaceAll("'", '"')
+        var parseJSON = JSON.parse(formatBody)
+        var prettyJSON = JSON.stringify(parseJSON, undefined, 2)
+        setResponseBody(prettyJSON)
+        opResponse.current.toggle(e)
+      }
+    }
+  }
+
   const requestBodyTemplate = (rowData) => {
     if (rowData.systemlog_request_body !== '-') {
-      var formatBody = rowData.systemlog_request_body.replaceAll("'", '"')
-      var parseJSON = JSON.parse(formatBody)
-      var prettyJSON = JSON.stringify(parseJSON, undefined, 2)
       return (
         <>
           <Button
@@ -82,13 +108,13 @@ export default function SystemLogsList({ systemLogsList }) {
             icon="pi pi-info-circle"
             label="Detail"
             severity='warning'
-            onClick={(e) => opRequest.current.toggle(e)}
+            onClick={(e) => getRequestResponseBody('request', rowData.id, e)}
           />
           <OverlayPanel showCloseIcon ref={opRequest}>
             <InputTextarea
               disabled
               autoResize
-              value={prettyJSON}
+              value={requestBody}
               style={{ width: '966px' }}
             />
           </OverlayPanel>
@@ -101,8 +127,6 @@ export default function SystemLogsList({ systemLogsList }) {
 
   const responseBodyTemplate = (rowData) => {
     if (rowData.systemlog_response_context !== '-') {
-      var parseJSON = JSON.parse(rowData.systemlog_response_context)
-      var prettyJSON = JSON.stringify(parseJSON, undefined, 2)
       return (
         <>
           <Button
@@ -110,13 +134,13 @@ export default function SystemLogsList({ systemLogsList }) {
             icon="pi pi-info-circle"
             label="Detail"
             severity='warning'
-            onClick={(e) => opResponse.current.toggle(e)}
+            onClick={(e) => getRequestResponseBody('response', rowData.id, e)}
           />
           <OverlayPanel showCloseIcon ref={opResponse}>
             <InputTextarea
               disabled
               autoResize
-              value={prettyJSON}
+              value={responseBody}
               style={{ width: '966px' }}
             />
           </OverlayPanel>
@@ -170,13 +194,13 @@ export default function SystemLogsList({ systemLogsList }) {
             header="Operator"
             className="font-bold text-xl"
             sortable
-            field="systemlog_operator_hm"
+            field="systemlog_operator"
             style={{ minWidth: '4rem' }}></Column>
           <Column
             header="Deptment"
             className="font-bold text-xl"
             sortable
-            field="systemlog_operator_dept_hm"
+            field="systemlog_operator_dept"
             style={{ minWidth: '4rem' }}></Column>
           <Column
             header="Request Path"

@@ -33,13 +33,13 @@ export default function AuthLogin() {
     e.preventDefault()
     try {
       const res = await signIn('credentials', {
-        redirect: true,
+        redirect: false,
         email: email,
         password: password,
         callbackUrl: callbackUrl,
       })
 
-      if (res?.error) {
+      if (!res?.ok) {
         errMsg.current.replace([
           { severity: 'error', summary: 'Error', detail: 'Invalid Email or Password', sticky: true, closable: true }
         ]);
@@ -94,7 +94,7 @@ export default function AuthLogin() {
                 </label>
                 <InputText
                   id="email"
-                  type="text"
+                  type="email"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   placeholder="Email address"
