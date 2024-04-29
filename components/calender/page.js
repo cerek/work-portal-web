@@ -5,7 +5,7 @@ import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
 
-export default function MyCalender(props) {
+export default function MyCalender({ calEvent }) {
   return (
     <FullCalendar
       plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
@@ -18,6 +18,7 @@ export default function MyCalender(props) {
       height="auto"
       allDaySlot={false}
       slotMinTime="06:00:00"
+      events={calEvent}
     />
   )
 }
