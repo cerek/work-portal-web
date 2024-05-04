@@ -40,7 +40,7 @@ export default function SchedulePlanList({
     schedule_plan_end_date: '',
     schedule_plan_work_shift: null,
     schedule_plan_employee: null,
-    schedule_plan_desc: ''
+    schedule_plan_desc: '',
   }
   const apiModule = 'scheduleplan'
   const dt = useRef(null)
@@ -126,97 +126,6 @@ export default function SchedulePlanList({
     </div>
   )
 
-  // Table Template
-  const statusBodyTemplate = (rowData) => {
-    return (
-      <Tag
-        value={rowData.schedule_plan_status_hm}
-        severity={getSeverity(rowData.schedule_plan_status_hm)}></Tag>
-    )
-  }
-
-  const workShiftBodyTemplate = (rowData) => {
-    return <>{rowData.schedule_plan_work_shift_hm}</>
-  }
-
-  const workDayBodyTemplate = (rowData) => {
-    const workDayList = rowData.schedule_plan_work_day.split(',')
-    const resList = workDayList.map((item) => (
-      <Badge value={item} className="mr-1" severity="secondary"></Badge>
-    ))
-    return <>{resList}</>
-  }
-
-  const getBindEmployeeList = async (id, e) => {
-    const bindEmployeeListRes = await fetch('/api/' + apiModule + '/' + id)
-    const bindEmployeeList = await bindEmployeeListRes.json()
-    if (!bindEmployeeListRes.ok) {
-      toast.current.show({
-        severity: 'error',
-        summary: 'Failed',
-        detail: JSON.stringify(bindEmployeeList),
-        life: 30000,
-      })
-    } else {
-      setBindEmployee(bindEmployeeList.schedule_plan_employee_hm.map(item => ({name:item})))
-      opBindEmployee.current.toggle(e)
-    }
-  }
-
-  const bindEmployeesBodyTemplate = (rowData) => {
-    if (rowData.schedule_plan_employee_hm.length !== 0) {
-    return (
-      <>
-        <Button
-          type="button"
-          icon="pi pi-info-circle"
-          label="Detail"
-          severity="warning"
-          onClick={(e) => getBindEmployeeList(rowData.id, e)}
-        />
-        <OverlayPanel showCloseIcon ref={opBindEmployee}>
-          <DataTable
-            value={bindEmployee}
-            scrollable
-            scrollHeight="400px">
-            <Column field="name" header="Name" style={{ minWidth: '12rem' }} />
-          </DataTable>
-        </OverlayPanel>
-      </>
-    )}
-    else {
-      return (
-        <>-</>
-      )
-    }
-  }
-
-  const actionBodyTemplate = (rowData) => {
-    return (
-      <React.Fragment>
-        <Button
-          icon="pi pi-trash"
-          rounded
-          outlined
-          severity="danger"
-          className="mr-2"
-          onClick={() => confirmDelete(rowData)}
-        />
-      </React.Fragment>
-    )
-  }
-
-  const getSeverity = (departmentStatus) => {
-    switch (departmentStatus) {
-      case 'Active':
-        return 'success'
-      case 'Suspend':
-        return 'danger'
-      default:
-        return null
-    }
-  }
-
   // RowEditor Relative
   const onRowEditComplete = async (e) => {
     let { newData, data } = e
@@ -243,16 +152,25 @@ export default function SchedulePlanList({
       if ('schedule_plan_work_day' in dirtyData) {
         dirtyData.schedule_plan_work_day =
           dirtyData.schedule_plan_work_day.toString()
+        dirtyData.schedule_plan_sync = true
       }
       if ('schedule_plan_end_date' in dirtyData) {
         dirtyData.schedule_plan_end_date = dirtyData.schedule_plan_end_date
           .toISOString()
           .split('T')[0]
+        dirtyData.schedule_plan_sync = true
       }
       if ('schedule_plan_start_date' in dirtyData) {
         dirtyData.schedule_plan_start_date = dirtyData.schedule_plan_start_date
           .toISOString()
           .split('T')[0]
+        dirtyData.schedule_plan_sync = true
+      }
+      if (
+        'schedule_plan_employee' in dirtyData ||
+        'schedule_plan_work_shift' in dirtyData
+      ) {
+        dirtyData.schedule_plan_sync = true
       }
       const res = await fetch('/api/' + apiModule + '/' + data.id, {
         method: 'PATCH',
@@ -272,7 +190,8 @@ export default function SchedulePlanList({
           severity: 'success',
           summary: 'Successful',
           detail:
-            JSON.stringify(resData.schedule_plan_name) + 'update Successfully!!',
+            JSON.stringify(resData.schedule_plan_name) +
+            'update Successfully!!',
           life: 3000,
         })
         const listRefreshData = await fetch('/api/' + apiModule)
@@ -488,6 +407,36 @@ export default function SchedulePlanList({
     }
   }
 
+  async function scheduleSync(id) {
+    const dirtyData = {schedule_plan_sync: false}
+    const res = await fetch('/api/scheduleplan/sync/' + id, {
+      method: 'PATCH',
+      body: JSON.stringify(dirtyData),
+    })
+    if (!res.ok) {
+      const resData = await res.json()
+      toast.current.show({
+        severity: 'error',
+        summary: 'Failed',
+        detail: JSON.stringify(resData),
+        life: 30000,
+      })
+    } else {
+      const resData = await res.json()
+      const listRefreshData = await fetch('/api/' + apiModule)
+      const newListData = await listRefreshData.json()
+      setListData(newListData)
+      setNewInstanceDialog(false)
+      toast.current.show({
+        severity: 'success',
+        summary: 'Successful',
+        detail:
+          JSON.stringify(resData.schedule_plan_name) + 'sync Successfully!!',
+        life: 3000,
+      })
+    }
+  }
+
   const onPage = async (event) => {
     setPageRows(event.rows)
     setFirstPage(event.first)
@@ -535,6 +484,110 @@ export default function SchedulePlanList({
       />
     </React.Fragment>
   )
+
+  // Table Template
+  const statusBodyTemplate = (rowData) => {
+    return (
+      <Tag
+        value={rowData.schedule_plan_status_hm}
+        severity={getSeverity(rowData.schedule_plan_status_hm)}></Tag>
+    )
+  }
+
+  const workShiftBodyTemplate = (rowData) => {
+    return <>{rowData.schedule_plan_work_shift_hm}</>
+  }
+
+  const workDayBodyTemplate = (rowData) => {
+    const workDayList = rowData.schedule_plan_work_day.split(',')
+    const resList = workDayList.map((item) => (
+      <Badge key={item} value={item} className="mr-1" severity="secondary"></Badge>
+    ))
+    return <>{resList}</>
+  }
+
+  const getBindEmployeeList = async (id, e) => {
+    const bindEmployeeListRes = await fetch('/api/' + apiModule + '/' + id)
+    const bindEmployeeList = await bindEmployeeListRes.json()
+    if (!bindEmployeeListRes.ok) {
+      toast.current.show({
+        severity: 'error',
+        summary: 'Failed',
+        detail: JSON.stringify(bindEmployeeList),
+        life: 30000,
+      })
+    } else {
+      setBindEmployee(
+        bindEmployeeList.schedule_plan_employee_hm.map((item) => ({
+          name: item,
+        }))
+      )
+      opBindEmployee.current.toggle(e)
+    }
+  }
+
+  const bindEmployeesBodyTemplate = (rowData) => {
+    if (rowData.schedule_plan_employee_hm.length !== 0) {
+      return (
+        <>
+          <Button
+            type="button"
+            icon="pi pi-info-circle"
+            label="Detail"
+            severity="warning"
+            onClick={(e) => getBindEmployeeList(rowData.id, e)}
+          />
+          <OverlayPanel showCloseIcon ref={opBindEmployee}>
+            <DataTable value={bindEmployee} scrollable scrollHeight="400px">
+              <Column
+                field="name"
+                header="Name"
+                style={{ minWidth: '12rem' }}
+              />
+            </DataTable>
+          </OverlayPanel>
+        </>
+      )
+    } else {
+      return <>-</>
+    }
+  }
+
+  const actionBodyTemplate = (rowData) => {
+    return (
+      <React.Fragment>
+        {rowData.schedule_plan_sync && (
+          <Button
+            icon="pi pi-sync"
+            rounded
+            label="Sync"
+            severity="danger"
+            className="mr-2"
+            onClick={() => scheduleSync(rowData.id)}
+          />
+        )}
+        <Button
+          icon="pi pi-trash"
+          rounded
+          outlined
+          severity="danger"
+          className="mr-2"
+          onClick={() => confirmDelete(rowData)}
+        />
+      </React.Fragment>
+    )
+  }
+
+  const getSeverity = (departmentStatus) => {
+    switch (departmentStatus) {
+      case 'Active':
+        return 'success'
+      case 'Suspend':
+        return 'danger'
+      default:
+        return null
+    }
+  }
 
   return (
     <>
