@@ -16,7 +16,6 @@ import { Paginator } from 'primereact/paginator'
 import { classNames } from 'primereact/utils'
 import {
   searchList,
-  pageControl,
   delInsConfirm,
   dirtyValues,
   getFormErrorMessage,
@@ -317,18 +316,18 @@ export default function ScheduleForEmployeeList({
     setPageRows(event.rows)
     setFirstPage(event.first)
     const newPage = event.page + 1
-    const newPageRes = await pageControl(
-      'schedule-employee/' +
+    const newPageRes = await fetch(
+      '/api/schedule-employee/' +
         empId +
         '/?schedule_date__gte=' +
         priorDate +
         '&schedule_date_lte=' +
         futureDate +
-        '&',
-      newPage,
-      event.rows
+        '&page=' + newPage +
+        '&page_size=' + event.rows
     )
-    setListData(newPageRes)
+    const newPageResult = await newPageRes.json()
+    setListData(newPageResult)
   }
 
   return (

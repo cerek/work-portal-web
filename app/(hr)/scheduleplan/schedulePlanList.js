@@ -397,6 +397,7 @@ export default function SchedulePlanList({
       const newListData = await listRefreshData.json()
       setListData(newListData)
       setNewInstanceDialog(false)
+      router.refresh()
       toast.current.show({
         severity: 'success',
         summary: 'Successful',
@@ -578,8 +579,8 @@ export default function SchedulePlanList({
     )
   }
 
-  const getSeverity = (departmentStatus) => {
-    switch (departmentStatus) {
+  const getSeverity = (intStatus) => {
+    switch (intStatus) {
       case 'Active':
         return 'success'
       case 'Suspend':
@@ -687,7 +688,7 @@ export default function SchedulePlanList({
           onPageChange={onPage}
           template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
           currentPageReportTemplate={
-            'Showing {first} to {last} of {totalRecords} locations'
+            'Showing {first} to {last} of {totalRecords} schedule plans'
           }></Paginator>
       </div>
 
