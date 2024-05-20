@@ -27,8 +27,7 @@ import {
 } from '@/lib/utils/page'
 
 export default function MyScheduleDetail({
-  myScheduleList,
-  myTimeOffList,
+  calData,
   myScheduleChangeList,
   workShiftList,
 }) {
@@ -362,7 +361,7 @@ export default function MyScheduleDetail({
     <>
       <div className="col-12 md:col-5">
         <div className="card">
-          <MyCalender calEvent={myScheduleList} />
+          <MyCalender calEvent={calData} />
         </div>
       </div>
 
@@ -419,7 +418,11 @@ export default function MyScheduleDetail({
         visible={newInstanceDialog}
         style={{ width: '50rem' }}
         breakpoints={{ '960px': '75vw', '641px': '90vw' }}
-        header="New Schedule Change"
+        header={
+          submitMethod === 'POST'
+            ? "New Schedule Change"
+            : "Update Schedule Change"
+        }
         modal
         className="p-fluid"
         onHide={() => setNewInstanceDialog(false)}>

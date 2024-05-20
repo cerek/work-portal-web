@@ -10,8 +10,8 @@ import { Paginator } from 'primereact/paginator'
 import MyCalender from '@/components/calender/page'
 import { pageControl } from '@/lib/utils/page'
 
-export default function ScheduleShow({ departmentList }) {
-  const apiModule = 'schedule'
+export default function TimeoffShow({ departmentList }) {
+  const apiModule = 'timeoff'
   const toast = useRef(null)
   const [selectDept, setSelectDept] = useState('')
   const [calData, setCalData] = useState()
@@ -29,8 +29,6 @@ export default function ScheduleShow({ departmentList }) {
   }
 
   const CheckEmployeeSchedule = async (empId) => {
-    // Add schedule dataList [Done]
-    // Add timeoff dateList [Done]
     const today = new Date()
     const priorDate = new Date(today.setDate(today.getDate() - 60))
     const formattedPriorDate = priorDate.toISOString().split('T')[0]
@@ -43,8 +41,7 @@ export default function ScheduleShow({ departmentList }) {
 
     // Pull schedule data
     const scheduleListRes = await fetch(
-      '/api/' +
-        apiModule +
+      '/api/schedule/' +
         '/?schedule_employee=' +
         empId +
         '&schedule_date__gte=' +
@@ -63,10 +60,11 @@ export default function ScheduleShow({ departmentList }) {
       })
       return
     }
+    console.log(scheduleList)
 
     // Pull timeoff data
     const timeoffListRes = await fetch(
-      '/api/timeoff/' +
+      '/api/' + apiModule +
         '/?timeoff_employee=' +
         empId +
         '&timeoff_date__gte=' +
@@ -128,7 +126,7 @@ export default function ScheduleShow({ departmentList }) {
           raised
           onClick={() => CheckEmployeeSchedule(rowData.id)}
         />
-        <Link href={'/schedule/employee/' + rowData.id}>
+        <Link href={'/timeoff/employee/' + rowData.id}>
           <Button
             icon="pi pi-pencil"
             className="mr-2"

@@ -7,6 +7,7 @@ import { DataTable } from 'primereact/datatable'
 import { Column } from 'primereact/column'
 import { Toast } from 'primereact/toast'
 import { Button } from 'primereact/button'
+import { SplitButton } from 'primereact/splitbutton'
 import { Toolbar } from 'primereact/toolbar'
 import { Dialog } from 'primereact/dialog'
 import { InputText } from 'primereact/inputtext'
@@ -127,88 +128,6 @@ export default function TimeoffApplicationList({
       </span>
     </div>
   )
-
-  // Table Template
-  const actionBodyTemplate = (rowData) => {
-    return (
-      <React.Fragment>
-        <Button
-          icon="pi pi-pencil"
-          severity="warning"
-          rounded
-          className="mr-2"
-          onClick={() => timeoffApplicationEdit(rowData.id)}
-        />
-        <Button
-          icon="pi pi-trash"
-          rounded
-          severity="danger"
-          onClick={() => confirmDelete(rowData)}
-        />
-      </React.Fragment>
-    )
-  }
-
-  const typeBodyTemplate = (rowData) => {
-    return <span>{rowData.timeoff_application_type_hm}</span>
-  }
-
-  const statusBodyTemplate = (rowData) => {
-    return (
-      <Tag severity={getSeverity(rowData.timeoff_application_status_hm)}>
-        {rowData.timeoff_application_status_hm}
-      </Tag>
-    )
-  }
-
-  const applicantBodyTemplate = (rowData) => {
-    return <span>{rowData.timeoff_application_applicant_hm}</span>
-  }
-
-  const approverBodyTemplate = (rowData) => {
-    return <span>{rowData.timeoff_application_approver_hm}</span>
-  }
-
-  const startToEndBodyTemplate = (rowData) => {
-    return (
-      <>
-        <span>
-          From:{' '}
-          <span className="font-bold">
-            {new Date(
-              rowData.timeoff_application_start_datetime
-            ).toLocaleString()}
-          </span>
-        </span>
-        <br />
-        <span>
-          To:{' '}
-          <span className="font-bold">
-            {new Date(
-              rowData.timeoff_application_end_datetime
-            ).toLocaleString()}
-          </span>
-        </span>
-        <br />
-      </>
-    )
-  }
-
-  const getSeverity = (insStatus) => {
-    switch (insStatus) {
-      case 'Apply':
-        return 'info'
-      case 'HR Approval':
-        return 'success'
-      case 'Manager Approval':
-        return 'primary'
-      case 'Cancel':
-      case 'Reject':
-        return 'danger'
-      default:
-        return null
-    }
-  }
 
   // Main operation function
   const timeoffApplicationEdit = async (id) => {
@@ -389,6 +308,36 @@ export default function TimeoffApplicationList({
     setListData(newPageRes)
   }
 
+  async function handleSchduleChangeDecide(operationStatus, id) {
+    const dirtyData = { timeoff_application_status: operationStatus }
+    const res = await fetch('/api/timeoffapplication/decide/' + id, {
+      method: 'PATCH',
+      body: JSON.stringify(dirtyData),
+    })
+    if (!res.ok) {
+      const resData = await res.json()
+      toast.current.show({
+        severity: 'error',
+        summary: 'Failed',
+        detail: JSON.stringify(resData),
+        life: 30000,
+      })
+    } else {
+      const resData = await res.json()
+      const listRefreshData = await fetch('/api/' + apiModule)
+      const newListData = await listRefreshData.json()
+      setListData(newListData)
+      router.refresh()
+      toast.current.show({
+        severity: 'success',
+        summary: 'Successful',
+        detail:
+          JSON.stringify(resData.schedule_change_applicant_hm) + operationStatus === 1 ? 'Approval' : 'Reject' + ' Successfully!!',
+        life: 3000,
+      })
+    }
+  }
+
   // Table delete Dialog Relative
   const confirmDelete = (instance) => {
     setDataInstance(instance)
@@ -428,6 +377,91 @@ export default function TimeoffApplicationList({
       />
     </React.Fragment>
   )
+
+  // Table Template
+  const actionBodyTemplate = (rowData) => {
+    return (
+      <React.Fragment>
+        {rowData.timeoff_application_status_hm === 'Apply' && (
+          <SplitButton label="Decide" icon="pi pi-question-circle" model={[{label: 'Approval', icon: 'pi pi-verified', command: () => handleSchduleChangeDecide(3, rowData.id)}, {label: 'Reject', icon: 'pi pi-times-circle', command: () => handleSchduleChangeDecide(5, rowData.id)}]} severity="danger" className='mr-2'></SplitButton>
+        )}
+        <Button
+          icon="pi pi-pencil"
+          severity="warning"
+          rounded
+          className="mr-2"
+          onClick={() => timeoffApplicationEdit(rowData.id)}
+        />
+        <Button
+          icon="pi pi-trash"
+          rounded
+          severity="danger"
+          onClick={() => confirmDelete(rowData)}
+        />
+      </React.Fragment>
+    )
+  }
+
+  const typeBodyTemplate = (rowData) => {
+    return <span>{rowData.timeoff_application_type_hm}</span>
+  }
+
+  const statusBodyTemplate = (rowData) => {
+    return (
+      <Tag severity={getSeverity(rowData.timeoff_application_status_hm)}>
+        {rowData.timeoff_application_status_hm}
+      </Tag>
+    )
+  }
+
+  const applicantBodyTemplate = (rowData) => {
+    return <span>{rowData.timeoff_application_applicant_hm}</span>
+  }
+
+  const approverBodyTemplate = (rowData) => {
+    return <span>{rowData.timeoff_application_approver_hm}</span>
+  }
+
+  const startToEndBodyTemplate = (rowData) => {
+    return (
+      <>
+        <span>
+          From:{' '}
+          <span className="font-bold">
+            {new Date(
+              rowData.timeoff_application_start_datetime
+            ).toLocaleString()}
+          </span>
+        </span>
+        <br />
+        <span>
+          To:{' '}
+          <span className="font-bold">
+            {new Date(
+              rowData.timeoff_application_end_datetime
+            ).toLocaleString()}
+          </span>
+        </span>
+        <br />
+      </>
+    )
+  }
+
+  const getSeverity = (insStatus) => {
+    switch (insStatus) {
+      case 'Apply':
+        return 'info'
+      case 'HR Approval':
+        return 'success'
+      case 'Manager Approval':
+        return 'primary'
+      case 'Cancel':
+      case 'Reject':
+        return 'danger'
+      default:
+        return null
+    }
+  }
 
   return (
     <>

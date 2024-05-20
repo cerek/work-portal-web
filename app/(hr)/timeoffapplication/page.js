@@ -4,7 +4,7 @@ import fetchSelectBoxData from '@/lib/fetchSelectBoxData/page'
 import NewBreadCrumb from '@/components/breadCrumb/page'
 import ErrorPage from '@/components/errorBlock/page'
 
-export default async function LocationPage() {
+export default async function TimeoffApplicationPage() {
   const timeoffApplicationList = await serverSideFetch('/timeoffapplication/')
   if ('error' in timeoffApplicationList) return ( <ErrorPage errMsg={JSON.stringify(timeoffApplicationList.error)} /> )
 

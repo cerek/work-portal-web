@@ -4,7 +4,7 @@ import NewBreadCrumb from '@/components/breadCrumb/page'
 import ErrorPage from '@/components/errorBlock/page'
 import MyScheduleDetail from './myScheduleDetail'
 
-export default async function MySchedulePage({ params }) {
+export default async function MySchedulePage() {
   const today = new Date()
   const priorDate = new Date(today.setDate(today.getDate() - 60))
   const formattedPriorDate = priorDate.toISOString().split('T')[0]
@@ -15,13 +15,14 @@ export default async function MySchedulePage({ params }) {
   )
   const formattedFutureDate = futureDate.toISOString().split('T')[0]
   
-  const myScheduleListRes = await serverSideFetch('/myschedule/?schedule_date__gte=' + formattedPriorDate + '&schedule_date__lte=' + formattedFutureDate)
+  const myScheduleListRes = await serverSideFetch('/myschedule/?schedule_date__gte=' + formattedPriorDate + '&schedule_date__lte=' + formattedFutureDate + '&page_size=200')
   if ('error' in myScheduleListRes)
     return <ErrorPage errMsg={JSON.stringify(myScheduleListRes.error)} />
   // Need to filter the date range of my timeoff
-  const myTimeOffList = await serverSideFetch('/mytimeoff/')
-  if ('error' in myTimeOffList)
-    return <ErrorPage errMsg={JSON.stringify(myTimeOffList.error)} />
+  const myTimeOffListRes = await serverSideFetch('/mytimeoff/?timeoff_date__gte=' + formattedPriorDate + '&timeoff_date__lte=' + formattedFutureDate + '&page_size=200')
+  if ('error' in myTimeOffListRes)
+    return <ErrorPage errMsg={JSON.stringify(myTimeOffListRes.error)} />
+
   const myScheduleChangeList = await serverSideFetch('/myschedulechange/')
   if ('error' in myScheduleChangeList)
     return <ErrorPage errMsg={JSON.stringify(myScheduleChangeList.error)} />
@@ -34,18 +35,27 @@ export default async function MySchedulePage({ params }) {
     }
   })
 
-  const workShiftList = await fetchSelectBoxData('/selectbox/workshift/?page_size=500')
+  const myTimeOffList = myTimeOffListRes.results.map(function (element) {
+    return {
+      title: element.timeoff_type,
+      start: element.timeoff_start_datetime_hm,
+      end: element.timeoff_end_datetime_hm,
+      backgroundColor: '#ffcc00',
+      eventBorderColor: 'black',
+      textColor: 'black',
+    }
+  })
   // combine schedule list and timeoff list
-  // pass to whole list to the calendar componment
+  const calData = myScheduleList.concat(myTimeOffList)
 
+  const workShiftList = await fetchSelectBoxData('/selectbox/workshift/?page_size=500')
 
 
   return (
     <div className="grid">
       <NewBreadCrumb />
       <MyScheduleDetail
-        myScheduleList={myScheduleList}
-        myTimeOffList={myTimeOffList}
+        calData={calData}
         myScheduleChangeList={myScheduleChangeList}
         workShiftList={workShiftList}
       />
